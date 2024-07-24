@@ -14,6 +14,7 @@ func main() {
 	}
 
 	rootCmd.AddCommand(cmdList)
+	rootCmd.AddCommand(NewCreateCmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
