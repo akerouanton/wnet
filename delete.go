@@ -4,10 +4,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewRmCmd(driver string) *cobra.Command {
+func NewDeleteCmd(driver string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "rm",
-		Short: "Remove a network",
+		Use:   "delete",
+		Short: "Delete a network",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if driver == driverHCN {
 				return HcnDeleteNetwork(args[0])

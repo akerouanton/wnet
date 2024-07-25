@@ -35,7 +35,7 @@ func newDriverCmd(driver string) *cobra.Command {
 	}
 	driverCmd.AddCommand(NewListCmd(driver))
 	driverCmd.AddCommand(NewCreateCmd(driver))
-	driverCmd.AddCommand(NewRmCmd(driver))
+	driverCmd.AddCommand(NewDeleteCmd(driver))
 
 	return driverCmd
 }
