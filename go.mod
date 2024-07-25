@@ -1,4 +1,4 @@
-module github.com/akerouanton/hcn-ipv6
+module github.com/akerouanton/wnet
 
 go 1.22.5
 
