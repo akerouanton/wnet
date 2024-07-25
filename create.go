@@ -11,15 +11,20 @@ import (
 )
 
 func NewCreateCmd(driver string) *cobra.Command {
+	var debug bool
+
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new network",
 		Run: func(cmd *cobra.Command, args []string) {
 			var err error
-			if driver == driverHCN {
-				err = runHcnCreate(args[0])
-			} else {
-				err = runHnsCreate(args[0])
+			switch driver {
+			case driverHCN:
+				err = runHcnCreate(args[0], debug)
+			case driverHNS:
+				err = runHnsCreate(args[0], debug)
+			default:
+				err = fmt.Errorf("unsupported driver %s", driver)
 			}
 
 			if err != nil {
@@ -30,11 +35,12 @@ func NewCreateCmd(driver string) *cobra.Command {
 	}
 
 	cmd.Args = cobra.ExactArgs(1)
+	cmd.Flags().BoolVar(&debug, "debug", false, "show the network spec before sending it to HNS/HCN")
 
 	return cmd
 }
 
-func runHnsCreate(specFile string) error {
+func runHnsCreate(specFile string, debug bool) error {
 	spec, err := os.ReadFile(specFile)
 	if err != nil {
 		return fmt.Errorf("failed to read spec file: %w", err)
@@ -45,7 +51,9 @@ func runHnsCreate(specFile string) error {
 		return fmt.Errorf("failed to parse network spec: %w", err)
 	}
 
-	PrintHnsNetwork(nw)
+	if debug {
+		PrintHnsNetwork(nw)
+	}
 
 	nwId, err := HnsCreateNetwork(nw)
 	if err != nil {
@@ -56,7 +64,7 @@ func runHnsCreate(specFile string) error {
 	return nil
 }
 
-func runHcnCreate(specFile string) error {
+func runHcnCreate(specFile string, debug bool) error {
 	spec, err := os.ReadFile(specFile)
 	if err != nil {
 		return fmt.Errorf("failed to read spec file: %w", err)
@@ -67,7 +75,9 @@ func runHcnCreate(specFile string) error {
 		return fmt.Errorf("failed to parse network spec: %w", err)
 	}
 
-	PrintHcnNetwork(nw)
+	if debug {
+		PrintHcnNetwork(nw)
+	}
 
 	createdNw, err := nw.Create()
 	if err != nil {
