@@ -40,8 +40,8 @@ func runHnsCreate(specFile string) error {
 		return fmt.Errorf("failed to read spec file: %w", err)
 	}
 
-	var nw hcsshim.HNSNetwork
-	if err := yaml.Unmarshal(spec, &nw); err != nil {
+	nw := &hcsshim.HNSNetwork{}
+	if err := yaml.Unmarshal(spec, nw); err != nil {
 		return fmt.Errorf("failed to parse network spec: %w", err)
 	}
 
@@ -62,11 +62,10 @@ func runHcnCreate(specFile string) error {
 		return fmt.Errorf("failed to read spec file: %w", err)
 	}
 
-	var nw hcn.HostComputeNetwork
-	if err := yaml.Unmarshal(spec, &nw); err != nil {
+	nw := &hcn.HostComputeNetwork{SchemaVersion: hcn.V2SchemaVersion()}
+	if err := yaml.Unmarshal(spec, nw); err != nil {
 		return fmt.Errorf("failed to parse network spec: %w", err)
 	}
-	nw.SchemaVersion = hcn.V2SchemaVersion()
 
 	PrintHcnNetwork(nw)
 

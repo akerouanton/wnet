@@ -11,7 +11,11 @@ func HnsListNetworks() ([]hcsshim.HNSNetwork, error) {
 	return hcsshim.HNSListNetworkRequest("GET", "", "")
 }
 
-func HnsCreateNetwork(nw hcsshim.HNSNetwork) (string, error) {
+func HnsGetNetwork(nwName string) (*hcsshim.HNSNetwork, error) {
+	return hcsshim.GetHNSNetworkByName(nwName)
+}
+
+func HnsCreateNetwork(nw *hcsshim.HNSNetwork) (string, error) {
 	config, err := json.Marshal(nw)
 	if err != nil {
 		return "", fmt.Errorf("marshal HNSNetwork: %w", err)
@@ -38,7 +42,7 @@ func HnsDeleteNetwork(netName string) error {
 	return nil
 }
 
-func PrintHnsNetwork(nw hcsshim.HNSNetwork) {
+func PrintHnsNetwork(nw *hcsshim.HNSNetwork) {
 	fmt.Printf("Network %q (ID: %s):\n", nw.Name, nw.Id)
 	fmt.Printf("\tType: %s\n", nw.Type)
 	fmt.Printf("\tNetwork adapter: %s\n", nw.NetworkAdapterName)

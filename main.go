@@ -34,6 +34,7 @@ func newDriverCmd(driver string) *cobra.Command {
 		Short: "Manage networks using the " + strings.ToUpper(driver) + " API",
 	}
 	driverCmd.AddCommand(NewListCmd(driver))
+	driverCmd.AddCommand(NewShowCmd(driver))
 	driverCmd.AddCommand(NewCreateCmd(driver))
 	driverCmd.AddCommand(NewDeleteCmd(driver))
 

@@ -16,6 +16,10 @@ func HcnListNetworks() ([]hcn.HostComputeNetwork, error) {
 	return nets, nil
 }
 
+func HcnGetNetwork(nwName string) (*hcn.HostComputeNetwork, error) {
+	return hcn.GetNetworkByName(nwName)
+}
+
 func HcnDeleteNetwork(netName string) error {
 	nw, err := hcn.GetNetworkByName(netName)
 	if err != nil {
@@ -25,7 +29,7 @@ func HcnDeleteNetwork(netName string) error {
 	return nw.Delete()
 }
 
-func PrintHcnNetwork(nw hcn.HostComputeNetwork) {
+func PrintHcnNetwork(nw *hcn.HostComputeNetwork) {
 	fmt.Printf("Network %q (ID: %s):\n", nw.Name, nw.Id)
 	fmt.Printf("\tType: %s\n", nw.Type)
 
