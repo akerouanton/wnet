@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Microsoft/hcsshim/hcn"
 	"github.com/spf13/cobra"
@@ -43,7 +44,12 @@ func runList(cmd *cobra.Command, args []string) error {
 		fmt.Printf("\tIPAMs:\n")
 		for _, ipam := range net.Ipams {
 			fmt.Printf("\t\t- Type: %s\n", ipam.Type)
-			fmt.Printf("\t\t  Subnets: %v\n", ipam.Subnets)
+			fmt.Printf("\t\t  Subnets:\n")
+			for _, subnet := range ipam.Subnets {
+				fmt.Printf("\t\t\t- Prefix: %s\n", subnet.IpAddressPrefix)
+				fmt.Printf("\t\t\t  Policies: %s\n", subnet.Policies)
+				fmt.Printf("\t\t\t  Routes: %+v\n", subnet.Routes)
+			}
 		}
 
 		fmt.Printf("\tFlags: %s (%d)\n", netFlagsToStr(net.Flags), net.Flags)
@@ -65,16 +71,24 @@ func runList(cmd *cobra.Command, args []string) error {
 }
 
 func netFlagsToStr(netflags hcn.NetworkFlags) string {
-	switch netflags {
-	case hcn.None:
-		return "None"
-	case hcn.EnableNonPersistent:
-		return "EnableNonPersistent"
-	case hcn.DisableHostPort:
-		return "DisableHostPort"
-	case hcn.EnableIov:
-		return "EnableIov"
-	default:
-		return "Unknown flag"
+	flags := []string{}
+
+	if netflags == hcn.None {
+		flags = append(flags, "None")
 	}
+	if netflags&hcn.EnableNonPersistent > 0 {
+		flags = append(flags, "EnableNonPersistent")
+	}
+	if netflags&hcn.DisableHostPort > 0 {
+		flags = append(flags, "DisableHostPort")
+	}
+	if netflags&hcn.EnableIov > 0 {
+		flags = append(flags, "EnableIov")
+	}
+
+	if len(flags) == 0 {
+		flags = append(flags, fmt.Sprintf("Unknown flags (%d)", netflags))
+	}
+
+	return strings.Join(flags, ", ")
 }
