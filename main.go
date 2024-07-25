@@ -3,8 +3,14 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
+)
+
+const (
+	driverHNS = "hns"
+	driverHCN = "hcn"
 )
 
 func main() {
@@ -13,12 +19,23 @@ func main() {
 		Short: "wnet is a small utility that can be used to manage HNS / HCN networks",
 	}
 
-	rootCmd.AddCommand(cmdList)
-	rootCmd.AddCommand(NewCreateCmd())
-	rootCmd.AddCommand(NewRmCmd())
+	rootCmd.AddCommand(newDriverCmd(driverHNS))
+	rootCmd.AddCommand(newDriverCmd(driverHCN))
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func newDriverCmd(driver string) *cobra.Command {
+	driverCmd := &cobra.Command{
+		Use:   driver,
+		Short: "Manage networks using the " + strings.ToUpper(driver) + " API",
+	}
+	driverCmd.AddCommand(NewListCmd(driver))
+	driverCmd.AddCommand(NewCreateCmd(driver))
+	driverCmd.AddCommand(NewRmCmd(driver))
+
+	return driverCmd
 }

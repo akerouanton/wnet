@@ -2,63 +2,79 @@ package main
 
 import (
 	"fmt"
+	"github.com/Microsoft/hcsshim"
+	"gopkg.in/yaml.v3"
+	"os"
 
 	"github.com/Microsoft/hcsshim/hcn"
 	"github.com/spf13/cobra"
 )
 
-type createFlags struct {
-	networkName      string
-	networkType      string
-	ipamType         string
-	subnetPrefix     string
-	routeGateway     string
-	routeDestination string
-}
-
-func NewCreateCmd() *cobra.Command {
-	flags := createFlags{}
-
+func NewCreateCmd(driver string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new network",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCreate(flags)
+		Run: func(cmd *cobra.Command, args []string) {
+			var err error
+			if driver == driverHCN {
+				err = runHcnCreate(args[0])
+			} else {
+				err = runHnsCreate(args[0])
+			}
+
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 		},
 	}
 
-	cmd.Flags().StringVar(&flags.networkName, "network-name", "", "")
-	cmd.Flags().StringVar(&flags.networkType, "network-type", "nat", "")
-	cmd.Flags().StringVar(&flags.ipamType, "ipam-type", "static", "")
-	cmd.Flags().StringVar(&flags.subnetPrefix, "subnet-prefix", "", "")
-	cmd.Flags().StringVar(&flags.routeGateway, "route-gateway", "", "")
-	cmd.Flags().StringVar(&flags.routeDestination, "route-destination", "", "")
+	cmd.Args = cobra.ExactArgs(1)
 
 	return cmd
 }
 
-func runCreate(flags createFlags) error {
-	net := &hcn.HostComputeNetwork{
-		Name: flags.networkName,
-		Type: hcn.NetworkType(flags.networkType),
-		Ipams: []hcn.Ipam{{
-			Type: flags.ipamType,
-			Subnets: []hcn.Subnet{{
-				IpAddressPrefix: flags.subnetPrefix,
-				Routes: []hcn.Route{
-					{NextHop: flags.routeGateway, DestinationPrefix: flags.routeDestination},
-				},
-			}},
-		}},
-		SchemaVersion: hcn.V2SchemaVersion(),
-	}
-
-	net, err := net.Create()
+func runHnsCreate(specFile string) error {
+	spec, err := os.ReadFile(specFile)
 	if err != nil {
-		return fmt.Errorf("HostComputeNetwork.Create: %w", err)
+		return fmt.Errorf("failed to read spec file: %w", err)
 	}
 
-	fmt.Println(net.Id)
+	var nw hcsshim.HNSNetwork
+	if err := yaml.Unmarshal(spec, &nw); err != nil {
+		return fmt.Errorf("failed to parse network spec: %w", err)
+	}
 
+	PrintHnsNetwork(nw)
+
+	nwId, err := HnsCreateNetwork(nw)
+	if err != nil {
+		return fmt.Errorf("failed to create network: %w", err)
+	}
+
+	fmt.Println(nwId)
+	return nil
+}
+
+func runHcnCreate(specFile string) error {
+	spec, err := os.ReadFile(specFile)
+	if err != nil {
+		return fmt.Errorf("failed to read spec file: %w", err)
+	}
+
+	var nw hcn.HostComputeNetwork
+	if err := yaml.Unmarshal(spec, &nw); err != nil {
+		return fmt.Errorf("failed to parse network spec: %w", err)
+	}
+	nw.SchemaVersion = hcn.V2SchemaVersion()
+
+	PrintHcnNetwork(nw)
+
+	createdNw, err := nw.Create()
+	if err != nil {
+		return fmt.Errorf("failed to create network: %w", err)
+	}
+
+	fmt.Println(createdNw.Id)
 	return nil
 }
